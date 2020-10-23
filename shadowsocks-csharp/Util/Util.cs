@@ -8,6 +8,10 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using Shadowsocks.Controller;
 using Shadowsocks.Model;
+using System.Drawing;
+using ZXing;
+using ZXing.QrCode;
+using ZXing.Common;
 
 namespace Shadowsocks.Util
 {
@@ -46,7 +50,7 @@ namespace Shadowsocks.Util
                     }
                     else
                     {
-                        _tempPath = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), @"Shadowsocks\ss_win_temp_" + Application.ExecutablePath.GetHashCode())).FullName;
+                        _tempPath = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), @"Shadowsocks\ss_win_temp_" + Program.ExecutablePath.GetHashCode())).FullName;
                     }
                 }
                 catch (Exception e)
@@ -93,42 +97,6 @@ namespace Shadowsocks.Util
         public static string GetTempPath(string filename)
         {
             return Path.Combine(GetTempPath(), filename);
-        }
-
-        public static void ReleaseMemory(bool removePages)
-        {
-            // release any unused pages
-            // making the numbers look good in task manager
-            // this is totally nonsense in programming
-            // but good for those users who care
-            // making them happier with their everyday life
-            // which is part of user experience
-            GC.Collect(GC.MaxGeneration);
-            GC.WaitForPendingFinalizers();
-            if (removePages)
-            {
-                // as some users have pointed out
-                // removing pages from working set will cause some IO
-                // which lowered user experience for another group of users
-                //
-                // so we do 2 more things here to satisfy them:
-                // 1. only remove pages once when configuration is changed
-                // 2. add more comments here to tell users that calling
-                //    this function will not be more frequent than
-                //    IM apps writing chat logs, or web browsers writing cache files
-                //    if they're so concerned about their disk, they should
-                //    uninstall all IM apps and web browsers
-                //
-                // please open an issue if you're worried about anything else in your computer
-                // no matter it's GPU performance, monitor contrast, audio fidelity
-                // or anything else in the task manager
-                // we'll do as much as we can to help you
-                //
-                // just kidding
-                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle,
-                                         (UIntPtr)0xFFFFFFFF,
-                                         (UIntPtr)0xFFFFFFFF);
-            }
         }
 
         public static string UnGzip(byte[] buf)
@@ -238,7 +206,7 @@ namespace Shadowsocks.Util
             // we are building x86 binary for both x86 and x64, which will
             // cause problem when opening registry key
             // detect operating system instead of CPU
-            if (name.IsNullOrEmpty()) throw new ArgumentException(nameof(name));
+            if (string.IsNullOrEmpty(name)) throw new ArgumentException(nameof(name));
             try
             {
                 RegistryKey userKey = RegistryKey.OpenBaseKey(hive,
@@ -263,11 +231,47 @@ namespace Shadowsocks.Util
             return Environment.OSVersion.Version.Major > 5;
         }
 
-        [DllImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool SetProcessWorkingSetSize(IntPtr process,
-            UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
+        public static string ScanQRCodeFromScreen()
+        {
+            foreach (Screen screen in Screen.AllScreens)
+            {
+                using (Bitmap fullImage = new Bitmap(screen.Bounds.Width,
+                                                screen.Bounds.Height))
+                {
+                    using (Graphics g = Graphics.FromImage(fullImage))
+                    {
+                        g.CopyFromScreen(screen.Bounds.X,
+                                         screen.Bounds.Y,
+                                         0, 0,
+                                         fullImage.Size,
+                                         CopyPixelOperation.SourceCopy);
+                    }
+                    int maxTry = 10;
+                    for (int i = 0; i < maxTry; i++)
+                    {
+                        int marginLeft = (int)((double)fullImage.Width * i / 2.5 / maxTry);
+                        int marginTop = (int)((double)fullImage.Height * i / 2.5 / maxTry);
+                        Rectangle cropRect = new Rectangle(marginLeft, marginTop, fullImage.Width - marginLeft * 2, fullImage.Height - marginTop * 2);
+                        Bitmap target = new Bitmap(screen.Bounds.Width, screen.Bounds.Height);
 
+                        double imageScale = (double)screen.Bounds.Width / (double)cropRect.Width;
+                        using (Graphics g = Graphics.FromImage(target))
+                        {
+                            g.DrawImage(fullImage, new Rectangle(0, 0, target.Width, target.Height),
+                                            cropRect,
+                                            GraphicsUnit.Pixel);
+                        }
+                        var source = new BitmapLuminanceSource(target);
+                        var bitmap = new BinaryBitmap(new HybridBinarizer(source));
+                        QRCodeReader reader = new QRCodeReader();
+                        var result = reader.decode(bitmap);
+                        if (result != null)
+                            return result.Text;
+                    }
+                }
+            }
+            return null;
+        }
 
         // See: https://msdn.microsoft.com/en-us/library/hh925568(v=vs.110).aspx
         public static bool IsSupportedRuntimeVersion()

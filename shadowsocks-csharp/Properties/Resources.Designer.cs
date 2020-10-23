@@ -22,7 +22,7 @@ namespace Shadowsocks.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace Shadowsocks.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Shadowsocks.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace Shadowsocks.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -69,73 +69,50 @@ namespace Shadowsocks.Properties {
         ///// 2019-02-08: Updated to support shadowsocks-windows user rules.
         ///
         ///var proxy = __PROXY__;
-        ///var userrules = __USERRULES__;
-        ///var rules = __RULES__;
+        ///var userrules = [];
+        ///var rules = [];
         ///
-        ////*
-        ///* This file is part of Adblock Plus &lt;http://adblockplus.org/&gt;,
-        ///* Copyright (C) 2006-2014 Eyeo GmbH
-        ///*
-        ///* Adblock Plus is free software: you can redistribute it and/or  [rest of string was truncated]&quot;;.
+        ///// convert to abp grammar
+        ///for (var i = 0; i &lt; __RULES__.length; i++) {
+        ///    var s = __RULES__[i];
+        ///    if (s.substring(0, 2) == &quot;||&quot;) s += &quot;^&quot;;
+        ///    rules.push(s);
+        ///}
+        ///
+        ///for (var i = 0; i &lt; [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string abp_js {
+        public static string abp_js {
             get {
                 return ResourceManager.GetString("abp_js", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to var __USERRULES__ = [];
-        ///var __RULES__ = [
-        ///    &quot;|http://85.17.73.31/&quot;,
-        ///    &quot;||agnesb.fr&quot;,
-        ///    &quot;||akiba-web.com&quot;,
-        ///    &quot;||altrec.com&quot;,
-        ///    &quot;||angela-merkel.de&quot;,
-        ///    &quot;||angola.org&quot;,
-        ///    &quot;||apartmentratings.com&quot;,
-        ///    &quot;||apartments.com&quot;,
-        ///    &quot;||arena.taipei&quot;,
-        ///    &quot;||asianspiss.com&quot;,
-        ///    &quot;||assimp.org&quot;,
-        ///    &quot;||athenaeizou.com&quot;,
-        ///    &quot;||azubu.tv&quot;,
-        ///    &quot;||bankmobilevibe.com&quot;,
-        ///    &quot;||banorte.com&quot;,
-        ///    &quot;||bash-hackers.org&quot;,
-        ///    &quot;||beeg.com&quot;,
-        ///    &quot;||global.bing.com&quot;,
-        ///    &quot;||bloombergview.com&quot;,
-        ///    &quot;||booktopia.com.au&quot;,
-        /// [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static string default_abp_rule {
+        public static byte[] dlc_dat {
             get {
-                return ResourceManager.GetString("default_abp_rule", resourceCulture);
+                object obj = ResourceManager.GetObject("dlc_dat", resourceCulture);
+                return ((byte[])(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to en,zh-CN,zh-TW,ja
-        ///#Restart program to apply translation,,,
-        ///#This is comment line,,,
-        ///#Always keep language name at head of file,,,
-        ///#Language name is output in log,,,
-        ///&quot;#You can find it by search &quot;&quot;Current language is:&quot;&quot;&quot;,,,
-        ///#Please use UTF-8 with BOM encoding so we can edit it in Excel,,,
-        ///,,,
-        ///Shadowsocks,Shadowsocks,Shadowsocks,Shadowsocks
-        ///,,,
-        ///#Menu,,,
-        ///,,,
-        ///System Proxy,系统代理,系統代理,システムプロキシ
-        ///Disable,禁用,禁用,無効
-        ///PAC,PAC 模式,PAC 模式,PAC
-        ///Global,全局模式,全局模式,全般
-        ///Servers,服务器,伺服器,サーバー
-        ///Edit Servers...,编辑服务器...,編輯伺服器...,サーバーの編集.. [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to en,ru-RU,zh-CN,zh-TW,ja,ko,fr
+        ///#Restart program to apply translation,,,,,,
+        ///#This is comment line,,,,,,
+        ///#Always keep language name at head of file,,,,,,
+        ///#Language name is output in log,,,,,,
+        ///&quot;#You can find it by search &quot;&quot;Current language is:&quot;&quot;&quot;,,,,,,
+        ///#Please use UTF-8 with BOM encoding so we can edit it in Excel,,,,,,
+        ///,,,,,,
+        ///Shadowsocks,Shadowsocks,Shadowsocks,Shadowsocks,Shadowsocks,Shadowsocks,Shadowsocks
+        ///,,,,,,
+        ///#Menu,,,,,,
+        ///,,,,,,
+        ///System Proxy,Системный прокси-сервер,系统代理,系統代理,システムプロキシ,시스템 프록시,P [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string i18n_csv {
+        public static string i18n_csv {
             get {
                 return ResourceManager.GetString("i18n_csv", resourceCulture);
             }
@@ -144,7 +121,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] libsscrypto_dll {
+        public static byte[] libsscrypto_dll {
             get {
                 object obj = ResourceManager.GetObject("libsscrypto_dll", resourceCulture);
                 return ((byte[])(obj));
@@ -153,17 +130,14 @@ namespace Shadowsocks.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+        ///&lt;!-- Warning: Configuration may reset after shadowsocks upgrade. --&gt;
+        ///&lt;!-- If you messed it up, delete this file and Shadowsocks will create a new one. --&gt;
         ///&lt;nlog xmlns=&quot;http://www.nlog-project.org/schemas/NLog.xsd&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
         ///  &lt;targets&gt;
-        ///    &lt;target name=&quot;file&quot; xsi:type=&quot;File&quot; fileName=&quot;shadowsocks.log&quot;/&gt;
-        ///    
-        ///  &lt;/targets&gt;
-        ///  &lt;rules&gt;
-        ///    &lt;logger name=&quot;Name.Space.Class1&quot; minlevel=&quot;Debug&quot; writeTo=&quot;f1&quot; /&gt;
-        ///  &lt;/rules&gt;
-        ///&lt;/nlog&gt;.
+        ///    &lt;!-- This line is managed by Shadowsocks. Do not modify it unless you know what you are doing.--&gt;
+        ///    &lt;target name=&quot;file&quot; xsi:type=&quot;File&quot; fileName=&quot;ss_win_temp\shadowsocks.log&quot; writ [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string NLog_config {
+        public static string NLog_config {
             get {
                 return ResourceManager.GetString("NLog_config", resourceCulture);
             }
@@ -180,7 +154,7 @@ namespace Shadowsocks.Properties {
         ///hide-console
         ///.
         /// </summary>
-        internal static string privoxy_conf {
+        public static string privoxy_conf {
             get {
                 return ResourceManager.GetString("privoxy_conf", resourceCulture);
             }
@@ -189,7 +163,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] privoxy_exe {
+        public static byte[] privoxy_exe {
             get {
                 object obj = ResourceManager.GetObject("privoxy_exe", resourceCulture);
                 return ((byte[])(obj));
@@ -199,7 +173,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ss32Fill {
+        public static System.Drawing.Bitmap ss32Fill {
             get {
                 object obj = ResourceManager.GetObject("ss32Fill", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -209,7 +183,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ss32In {
+        public static System.Drawing.Bitmap ss32In {
             get {
                 object obj = ResourceManager.GetObject("ss32In", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -219,7 +193,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ss32Out {
+        public static System.Drawing.Bitmap ss32Out {
             get {
                 object obj = ResourceManager.GetObject("ss32Out", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -229,7 +203,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ss32Outline {
+        public static System.Drawing.Bitmap ss32Outline {
             get {
                 object obj = ResourceManager.GetObject("ss32Outline", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -239,7 +213,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ssw128 {
+        public static System.Drawing.Bitmap ssw128 {
             get {
                 object obj = ResourceManager.GetObject("ssw128", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -249,7 +223,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] sysproxy_exe {
+        public static byte[] sysproxy_exe {
             get {
                 object obj = ResourceManager.GetObject("sysproxy_exe", resourceCulture);
                 return ((byte[])(obj));
@@ -259,7 +233,7 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] sysproxy64_exe {
+        public static byte[] sysproxy64_exe {
             get {
                 object obj = ResourceManager.GetObject("sysproxy64_exe", resourceCulture);
                 return ((byte[])(obj));
@@ -271,7 +245,7 @@ namespace Shadowsocks.Properties {
         ///! See https://adblockplus.org/en/filter-cheatsheet
         ///.
         /// </summary>
-        internal static string user_rule {
+        public static string user_rule {
             get {
                 return ResourceManager.GetString("user_rule", resourceCulture);
             }

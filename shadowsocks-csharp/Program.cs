@@ -1,29 +1,41 @@
-﻿using Microsoft.Win32;
-using NLog;
-using Shadowsocks.Controller;
-using Shadowsocks.Controller.Hotkeys;
-using Shadowsocks.Util;
-using Shadowsocks.View;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
-using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CommandLine;
+using Microsoft.Win32;
+using NLog;
+using ReactiveUI;
+using Shadowsocks.Controller;
+using Shadowsocks.Controller.Hotkeys;
+using Shadowsocks.Util;
+using Shadowsocks.View;
+using Splat;
+using WPFLocalizeExtension.Engine;
 
 namespace Shadowsocks
 {
     internal static class Program
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         public static ShadowsocksController MainController { get; private set; }
         public static MenuViewController MenuController { get; private set; }
+        public static CommandLineOption Options { get; private set; }
         public static string[] Args { get; private set; }
+
+        // https://github.com/dotnet/runtime/issues/13051#issuecomment-510267727
+        public static readonly string ExecutablePath = Process.GetCurrentProcess().MainModule?.FileName;
+        public static readonly string WorkingDirectory = Path.GetDirectoryName(ExecutablePath);
+
+        private static readonly Mutex mutex = new Mutex(true, $"Shadowsocks_{ExecutablePath.GetHashCode()}");
+
         /// <summary>
         /// 应用程序的主入口点。
         /// </summary>
@@ -31,16 +43,43 @@ namespace Shadowsocks
         [STAThread]
         private static void Main(string[] args)
         {
-            Directory.SetCurrentDirectory(Application.StartupPath);
+            #region Single Instance and IPC
+            bool hasAnotherInstance = !mutex.WaitOne(TimeSpan.Zero, true);
+
+            // store args for further use
+            Args = args;
+            Parser.Default.ParseArguments<CommandLineOption>(args)
+                .WithParsed(opt => Options = opt)
+                .WithNotParsed(e => e.Output());
+
+            if (hasAnotherInstance)
+            {
+                if (!string.IsNullOrWhiteSpace(Options.OpenUrl))
+                {
+                    IPCService.RequestOpenUrl(Options.OpenUrl);
+                }
+                else
+                {
+                    MessageBox.Show(I18N.GetString("Find Shadowsocks icon in your notify tray.")
+                                    + Environment.NewLine
+                                    + I18N.GetString("If you want to start multiple Shadowsocks, make a copy in another directory."),
+                        I18N.GetString("Shadowsocks is already running."));
+                }
+                return;
+            }
+            #endregion
+
+            #region Enviroment Setup
+            Directory.SetCurrentDirectory(WorkingDirectory);
             // todo: initialize the NLog configuartion
             Model.NLogConfig.TouchAndApplyNLogConfig();
 
             // .NET Framework 4.7.2 on Win7 compatibility
             ServicePointManager.SecurityProtocol |=
                 SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            #endregion
 
-            // store args for further use
-            Args = args;
+            #region Compactibility Check
             // Check OS since we are using dual-mode socket
             if (!Utils.IsWinVistaOrHigher())
             {
@@ -59,70 +98,9 @@ namespace Shadowsocks
                 }
                 return;
             }
-            string pipename = $"Shadowsocks\\{Application.StartupPath.GetHashCode()}";
+            #endregion
 
-            string addedUrl = null;
-
-            using (NamedPipeClientStream pipe = new NamedPipeClientStream(pipename))
-            {
-                bool pipeExist = false;
-                try
-                {
-                    pipe.Connect(10);
-                    pipeExist = true;
-                }
-                catch (TimeoutException)
-                {
-                    pipeExist = false;
-                }
-
-                // TODO: switch to better argv parser when it's getting complicate
-                List<string> alist = Args.ToList();
-                // check --open-url param
-                int urlidx = alist.IndexOf("--open-url") + 1;
-                if (urlidx > 0)
-                {
-                    if (Args.Length <= urlidx)
-                    {
-                        return;
-                    }
-
-                    // --open-url exist, and no other instance, add it later
-                    if (!pipeExist)
-                    {
-                        addedUrl = Args[urlidx];
-                    }
-                    // has other instance, send url via pipe then exit
-                    else
-                    {
-                        byte[] b = Encoding.UTF8.GetBytes(Args[urlidx]);
-                        byte[] opAddUrl = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(1));
-                        byte[] blen = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(b.Length));
-                        pipe.Write(opAddUrl, 0, 4); // opcode addurl
-                        pipe.Write(blen, 0, 4);
-                        pipe.Write(b, 0, b.Length);
-                        pipe.Close();
-                        return;
-                    }
-                }
-                // has another instance, and no need to communicate with it return
-                else if (pipeExist)
-                {
-                    Process[] oldProcesses = Process.GetProcessesByName("Shadowsocks");
-                    if (oldProcesses.Length > 0)
-                    {
-                        Process oldProcess = oldProcesses[0];
-                    }
-                    MessageBox.Show(I18N.GetString("Find Shadowsocks icon in your notify tray.")
-                        + Environment.NewLine
-                        + I18N.GetString("If you want to start multiple Shadowsocks, make a copy in another directory."),
-                        I18N.GetString("Shadowsocks is already running."));
-                    return;
-                }
-            }
-
-            Utils.ReleaseMemory(true);
-
+            #region Event Handlers Setup
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             // handle UI exceptions
             Application.ThreadException += Application_ThreadException;
@@ -133,8 +111,17 @@ namespace Shadowsocks
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             AutoStartup.RegisterForRestart(true);
+            #endregion
 
-            Directory.SetCurrentDirectory(Application.StartupPath);
+            // We would use this in v5.
+            // Parameters would have to be dropped from views' constructors (VersionUpdatePromptView)
+            //Locator.CurrentMutable.RegisterViewsForViewModels(Assembly.GetCallingAssembly());
+
+            // Workaround for hosting WPF controls in a WinForms app.
+            // We have to manually set the culture for the LocalizeDictionary instance.
+            // https://stackoverflow.com/questions/374518/localizing-a-winforms-application-with-embedded-wpf-user-controls
+            // https://stackoverflow.com/questions/14668640/wpf-localize-extension-translate-window-at-run-time
+            LocalizeDictionary.Instance.Culture = Thread.CurrentThread.CurrentCulture;
 
 #if DEBUG
             // truncate privoxy log file while debugging
@@ -148,15 +135,26 @@ namespace Shadowsocks
             HotKeys.Init(MainController);
             MainController.Start();
 
-            NamedPipeServer namedPipeServer = new NamedPipeServer();
-            Task.Run(() => namedPipeServer.Run(pipename));
-            namedPipeServer.AddUrlRequested += (_1, e) => MainController.AskAddServerBySSURL(e.Url);
-            if (!addedUrl.IsNullOrEmpty())
+            // Update online config 
+            Task.Run(async () =>
             {
-                MainController.AskAddServerBySSURL(addedUrl);
-            }
+                await Task.Delay(10 * 1000);
+                await MainController.UpdateAllOnlineConfig();
+            });
 
+#region IPC Handler and Arguement Process
+            IPCService ipcService = new IPCService();
+            Task.Run(() => ipcService.RunServer());
+            ipcService.OpenUrlRequested += (_1, e) => MainController.AskAddServerBySSURL(e.Url);
+
+            if (!string.IsNullOrWhiteSpace(Options.OpenUrl))
+            {
+                MainController.AskAddServerBySSURL(Options.OpenUrl);
+            }
+#endregion
+            
             Application.Run();
+
         }
 
         private static int exited = 0;
@@ -199,7 +197,7 @@ namespace Shadowsocks
                             Thread.Sleep(10 * 1000);
                             try
                             {
-                                MainController.Start(false);
+                                MainController.Start(true);
                                 logger.Info("controller started");
                             }
                             catch (Exception ex)
